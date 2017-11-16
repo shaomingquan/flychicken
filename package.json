@@ -1,0 +1,30 @@
+{
+  "name": "flychicken",
+  "version": "1.0.0",
+  "description": "eat chicken game",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shaomingquan/flychicken.git"
+  },
+  "keywords": [
+    "game",
+    "eatChicken",
+    "2d",
+    "typescript",
+    "go"
+  ],
+  "author": "shaomingquan <1218525419@qq.com> (http://shaomingquan.github.io)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shaomingquan/flychicken/issues"
+  },
+  "homepage": "https://github.com/shaomingquan/flychicken#readme",
+  "dependencies": {
+    "anywhere": "^1.4.0",
+    "matter-js": "^0.13.0"
+  }
+}

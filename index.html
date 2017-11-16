@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>demo</title>
+    <script src="./node_modules/matter-js/build/matter.min.js" charset="utf-8"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      // module aliases
+      var Engine = Matter.Engine,
+        Render = Matter.Render,
+        World = Matter.World,
+        Bodies = Matter.Bodies;
+        Body = Matter.Body;
+        Events = Matter.Events;
+
+      // create an engine
+      var engine = Engine.create();
+
+      // create a renderer
+      var render = Render.create({
+        element: document.body,
+        engine: engine
+      });
+
+      // create two boxes and a ground
+      window.boxA = Bodies.rectangle(400, 200, 20, 20);
+      var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+
+      // add all of the bodies to the world
+      World.add(engine.world, [boxA, ground]);
+
+      let codeDirectionMap = new Map();
+      codeDirectionMap.set(87, 'up');
+      codeDirectionMap.set(83, 'down');
+      codeDirectionMap.set(65, 'left');
+      codeDirectionMap.set(68, 'right');
+
+      //     87
+      // 65  83  68
+      var accelerationY = 0.05;
+      var accelerationX = 0.03;
+
+      var decelerationY = 0.1;
+      var decelerationX = 0.1;
+
+      var resistanceY = 0.075;
+      var resistanceX = 0.065;
+
+      var vY = 0;
+      var vX = 0;
+
+      var maxVY = 6;
+      var maxVX = 3;
+
+      var accY = false;
+      var acc_Y = false;
+      var accX = false;
+      var acc_X = false;
+
+      var whenkeyXDown = new Map();
+      var whenkeyXUp = new Map();
+      whenkeyXDown.set('down', _ => accY = true);
+      whenkeyXUp.set('down', _ => accY = false);
+      whenkeyXDown.set('up', _ => acc_Y = true);
+      whenkeyXUp.set('up', _ => acc_Y = false);
+      whenkeyXDown.set('right', _ => accX = true);
+      whenkeyXUp.set('right', _ => accX = false);
+      whenkeyXDown.set('left', _ => acc_X = true);
+      whenkeyXUp.set('left', _ => acc_X = false);
+
+      document.addEventListener('keydown', e => {
+        var code = (e.keyCode || e.which);
+        var direction = codeDirectionMap.get(code);
+        if(!direction) return
+        whenkeyXDown.get(direction)();
+      })
+      document.addEventListener('keyup', e => {
+        var code = (e.keyCode || e.which);
+        var direction = codeDirectionMap.get(code);
+        if(!direction) return
+        whenkeyXUp.get(direction)();
+      })
+      Events.on(engine, 'beforeUpdate', function(event) {
+        // document.title = vX + '/' + vY
+        if(accY) {
+          if(vY < 0) { //reverse
+            vY += resistanceY;
+          } else {
+            vY += accelerationY;
+            vY = Math.min(vY, maxVY);
+          }
+        }
+
+        if(accX) {
+          if(vX < 0) { //reverse
+            vX += resistanceX;
+          } else {
+            vX += accelerationX;
+            vX = Math.min(vX, maxVX);
+          }
+        }
+
+        if(acc_Y) {
+          if(vY > 0) { //reverse
+            vY -= resistanceY;
+          } else {
+            vY -= accelerationY;
+            vY = Math.max(vY, -maxVY);
+          }
+        }
+
+        if(acc_X) {
+          if(vX > 0) { //reverse
+            vX -= resistanceX;
+          } else {
+            vX -= accelerationX;
+            vX = Math.max(vX, -maxVX);
+          }
+        }
+
+        Body.setVelocity(boxA, {x: vX / 1, y: vY / 1})
+        // Body.setVelocity(boxA, {x: vX / 2, y: vY / 2})
+      })
+
+      // run the engine
+      Engine.run(engine);
+
+      // run the renderer
+      Render.run(render);
+    </script>
+  </body>
+</html>
