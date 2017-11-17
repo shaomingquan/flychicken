@@ -8,15 +8,17 @@
   <body>
     <script type="text/javascript">
       // module aliases
-      var Engine = Matter.Engine,
-        Render = Matter.Render,
-        World = Matter.World,
-        Bodies = Matter.Bodies;
-        Body = Matter.Body;
-        Events = Matter.Events;
+      window.Engine = Matter.Engine,
+      window.Render = Matter.Render,
+      window.World = Matter.World,
+      window.Bodies = Matter.Bodies;
+      window.Body = Matter.Body;
+      window.Events = Matter.Events;
 
       // create an engine
       var engine = Engine.create();
+      var world = engine.world;
+      world.gravity.y = 6;
 
       // create a renderer
       var render = Render.create({
@@ -25,7 +27,7 @@
       });
 
       // create two boxes and a ground
-      window.boxA = Bodies.rectangle(400, 200, 20, 20);
+      window.boxA = Bodies.circle(400, 200, 10, 10);
       var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
 
       // add all of the bodies to the world
@@ -42,33 +44,44 @@
       var accelerationY = 0.05;
       var accelerationX = 0.03;
 
+      // 制动加速度
       var decelerationY = 0.1;
       var decelerationX = 0.1;
 
+      // 阻力
       var resistanceY = 0.075;
       var resistanceX = 0.065;
 
+      // 当前速度
       var vY = 0;
       var vX = 0;
 
+      // 横纵的最大速度
       var maxVY = 6;
       var maxVX = 3;
 
+      // 加速度开关
       var accY = false;
       var acc_Y = false;
       var accX = false;
       var acc_X = false;
 
+      // 控制按键
       var whenkeyXDown = new Map();
       var whenkeyXUp = new Map();
-      whenkeyXDown.set('down', _ => accY = true);
-      whenkeyXUp.set('down', _ => accY = false);
-      whenkeyXDown.set('up', _ => acc_Y = true);
-      whenkeyXUp.set('up', _ => acc_Y = false);
-      whenkeyXDown.set('right', _ => accX = true);
-      whenkeyXUp.set('right', _ => accX = false);
-      whenkeyXDown.set('left', _ => acc_X = true);
-      whenkeyXUp.set('left', _ => acc_X = false);
+
+      // 飞船是否存在动力
+      var hasMotion = false;
+      var getMotion = f => _ => {hasMotion = true; f()}
+      var outofMotion = f => _ => {hasMotion = false; f()}
+      whenkeyXDown.set('down',  getMotion(_ => accY = true));
+      whenkeyXUp.set('down',    outofMotion(_ => accY = false));
+      whenkeyXDown.set('up',    getMotion(_ => acc_Y = true));
+      whenkeyXUp.set('up',      outofMotion(_ => acc_Y = false));
+      whenkeyXDown.set('right', getMotion(_ => accX = true));
+      whenkeyXUp.set('right',   outofMotion(_ => accX = false));
+      whenkeyXDown.set('left',  getMotion(_ => acc_X = true));
+      whenkeyXUp.set('left',    outofMotion(_ => acc_X = false));
 
       document.addEventListener('keydown', e => {
         var code = (e.keyCode || e.which);
@@ -83,10 +96,43 @@
         whenkeyXUp.get(direction)();
       })
       Events.on(engine, 'beforeUpdate', function(event) {
-        // document.title = vX + '/' + vY
+        if(!hasMotion) {
+          if(vY !== 0) {
+            let nextvY;
+            if(vY > 0) {
+              nextvY = vY - resistanceY;
+              if(nextvY * vY < 0) {
+                nextvY = 0
+              }
+            } else {
+              nextvY = vY + resistanceY;
+              if(nextvY * vY < 0) {
+                nextvY = 0
+              }
+            }
+            vY = nextvY
+          }
+
+          if(vX !== 0) {
+            let nextvX;
+            if(vX > 0) {
+              nextvX = vX - resistanceX;
+              if(nextvX * vX < 0) {
+                nextvX = 0
+              }
+            } else {
+              nextvX = vX + resistanceX;
+              if(nextvX * vX < 0) {
+                nextvX = 0
+              }
+            }
+            vX = nextvX
+          }
+        }
+
         if(accY) {
           if(vY < 0) { //reverse
-            vY += resistanceY;
+            vY += decelerationY;
           } else {
             vY += accelerationY;
             vY = Math.min(vY, maxVY);
@@ -95,7 +141,7 @@
 
         if(accX) {
           if(vX < 0) { //reverse
-            vX += resistanceX;
+            vX += decelerationX;
           } else {
             vX += accelerationX;
             vX = Math.min(vX, maxVX);
@@ -104,7 +150,7 @@
 
         if(acc_Y) {
           if(vY > 0) { //reverse
-            vY -= resistanceY;
+            vY -= decelerationY;
           } else {
             vY -= accelerationY;
             vY = Math.max(vY, -maxVY);
@@ -113,14 +159,14 @@
 
         if(acc_X) {
           if(vX > 0) { //reverse
-            vX -= resistanceX;
+            vX -= decelerationX;
           } else {
             vX -= accelerationX;
             vX = Math.max(vX, -maxVX);
           }
         }
 
-        Body.setVelocity(boxA, {x: vX / 1, y: vY / 1})
+        Body.setVelocity(boxA, {x: vX, y: vY})
         // Body.setVelocity(boxA, {x: vX / 2, y: vY / 2})
       })
 
