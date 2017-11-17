@@ -4,6 +4,14 @@
     <meta charset="utf-8">
     <title>demo</title>
     <script src="./node_modules/matter-js/build/matter.min.js" charset="utf-8"></script>
+    <style media="screen">
+      html, body {
+        height: 100%;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+    </style>
   </head>
   <body>
     <script type="text/javascript">
@@ -14,24 +22,86 @@
       window.Bodies = Matter.Bodies;
       window.Body = Matter.Body;
       window.Events = Matter.Events;
+      window.Bounds = Matter.Bounds;
+      window.Mouse = Matter.Mouse;
 
       // create an engine
       var engine = Engine.create();
       var world = engine.world;
       world.gravity.y = 6;
 
+      var heightOfWorld = 2000;
+      var widthOfWorld = 2000;
+
+      world.bounds.min.x = 0;
+      world.bounds.min.y = 0;
+      world.bounds.max.x = widthOfWorld;
+      world.bounds.max.y = heightOfWorld;
+
+
+
+      var STATIC = { isStatic: true };
+      var thicknessOfBound = 20;
+      var bounds = [
+        /* 上 */ Bodies.rectangle(
+                  widthOfWorld / 2,
+                  0,
+                  widthOfWorld,
+                  thicknessOfBound,
+                  STATIC
+                ),
+        /* 下 */ Bodies.rectangle(
+                  widthOfWorld / 2,
+                  heightOfWorld,
+                  widthOfWorld,
+                  thicknessOfBound,
+                  STATIC
+                ),
+        /* 左 */Bodies.rectangle(
+                  0,
+                  heightOfWorld / 2,
+                  thicknessOfBound,
+                  widthOfWorld,
+                  STATIC
+                ),
+        /* 右 */Bodies.rectangle(
+                  widthOfWorld,
+                  heightOfWorld / 2,
+                  thicknessOfBound,
+                  widthOfWorld,
+                  STATIC
+                ),
+      ]
+
       // create a renderer
-      var render = Render.create({
+      window.render = Render.create({
         element: document.body,
-        engine: engine
+        engine: engine,
+        options: {
+            width: 800,
+            height: 600,
+            showAngleIndicator: true,
+            hasBounds: true
+        }
       });
+
+      // mouse event
+      window.mouse = Mouse.create(render.canvas)
+
+
+
+
 
       // create two boxes and a ground
       window.boxA = Bodies.circle(400, 200, 10, 10);
-      var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+      // 视窗中心
+      function updateView () {
+        var boxPosition = window.boxA.position;
+
+      }
 
       // add all of the bodies to the world
-      World.add(engine.world, [boxA, ground]);
+      World.add(engine.world, [boxA, ...bounds]);
 
       let codeDirectionMap = new Map();
       codeDirectionMap.set(87, 'up');
@@ -166,10 +236,29 @@
           }
         }
 
+        var aposi = window.mouse.absolute;
+        var offsetX = (aposi.x - viewportCentre.x) / 3;
+        var offsetY = (aposi.y - viewportCentre.y) / 3;
+
+        // Fallow Hero X
+        render.bounds.min.x = boxA.position.x - cWidth / 2 + offsetX;
+        render.bounds.max.x = boxA.position.x + cWidth / 2 + offsetX;
+
+        // Fallow Hero Y
+        render.bounds.min.y = boxA.position.y - cHeight / 2 + offsetY;
+        render.bounds.max.y = boxA.position.y + cHeight / 2 + offsetY;
+
         Body.setVelocity(boxA, {x: vX, y: vY})
         // Body.setVelocity(boxA, {x: vX / 2, y: vY / 2})
       })
 
+      var canvasEle = document.getElementsByTagName('canvas')[0]
+      var cWidth = canvasEle.width;
+      var cHeight = canvasEle.height;
+      var viewportCentre = {
+        x: render.options.width * 0.5,
+        y: render.options.height * 0.5
+      };
       // run the engine
       Engine.run(engine);
 
