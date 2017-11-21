@@ -15,6 +15,14 @@
   </head>
   <body>
     <script type="text/javascript">
+
+// /demo/#collisionFiltering 这个例子可以用来开启隐身
+// /demo/#airFriction 这个例子可做减速的debuff
+// /demo/#events 这个例子用来做子弹撞击
+// 用颜色代表血量
+// 同步子弹数据的时候实际上是同步子弹的初始位置
+
+
       // module aliases
       window.Engine = Matter.Engine,
       window.Render = Matter.Render,
@@ -28,7 +36,7 @@
       // create an engine
       var engine = Engine.create();
       var world = engine.world;
-      world.gravity.y = 6;
+      world.gravity.y = 0;
 
       var heightOfWorld = 2000;
       var widthOfWorld = 2000;
@@ -78,10 +86,11 @@
         element: document.body,
         engine: engine,
         options: {
-            width: 800,
-            height: 600,
-            showAngleIndicator: true,
-            hasBounds: true
+            width: 1000,
+            height: 800,
+            // showAngleIndicator: true,
+            hasBounds: true,
+            wireframes: false
         }
       });
 
@@ -93,7 +102,11 @@
 
 
       // create two boxes and a ground
-      window.boxA = Bodies.circle(400, 200, 10, 10);
+      window.myr = 10;
+      window.boxA = Bodies.rectangle(400, 200, myr * 2, myr * 2);
+      window.boxA.render.fillStyle = 'rgba(255, 0, 0, 1)'
+      window.boxA.render.strokeStyle = 'rgba(255, 0, 0, 0.7)'
+      window.boxA.render.lineWidth = '5'
       // 视窗中心
       function updateView () {
         var boxPosition = window.boxA.position;
@@ -237,28 +250,76 @@
         }
 
         var aposi = window.mouse.absolute;
-        var offsetX = (aposi.x - viewportCentre.x) / 3;
-        var offsetY = (aposi.y - viewportCentre.y) / 3;
+        window.viewOffsetX = (aposi.x - viewportCentre.x) / 3;
+        window.viewOffsetY = (aposi.y - viewportCentre.y) / 3;
 
+
+        yourPositionAbs.x = viewportCentre.x + window.viewOffsetX;
+        yourPositionAbs.y = viewportCentre.y + window.viewOffsetY;
+
+        var www = aposi.x - yourPositionAbs.x;
+        var hhh = aposi.y - yourPositionAbs.y;
+        var ang = Math.atan(hhh / www)
+        Body.setAngle(window.boxA, ang)
         // Fallow Hero X
-        render.bounds.min.x = boxA.position.x - cWidth / 2 + offsetX;
-        render.bounds.max.x = boxA.position.x + cWidth / 2 + offsetX;
+        render.bounds.min.x = boxA.position.x - cWidth / 2 + viewOffsetX;
+        render.bounds.max.x = boxA.position.x + cWidth / 2 + viewOffsetX;
 
         // Fallow Hero Y
-        render.bounds.min.y = boxA.position.y - cHeight / 2 + offsetY;
-        render.bounds.max.y = boxA.position.y + cHeight / 2 + offsetY;
+        render.bounds.min.y = boxA.position.y - cHeight / 2 + viewOffsetY;
+        render.bounds.max.y = boxA.position.y + cHeight / 2 + viewOffsetY;
 
         Body.setVelocity(boxA, {x: vX, y: vY})
         // Body.setVelocity(boxA, {x: vX / 2, y: vY / 2})
       })
 
+      function scaletounithhhwww (hhh, www) {
+        var diagonal = Math.sqrt(hhh**2 + www**2)
+        return {
+          unith: (hhh / diagonal) * 2.5 * myr,
+          unitw: (www / diagonal) * 2.5 * myr
+        }
+      }
+
+      var bullets = [];
+      document.addEventListener('click', function () {
+        var aposi = window.mouse.absolute;
+        var www = aposi.x - yourPositionAbs.x;
+        var hhh = aposi.y - yourPositionAbs.y;
+
+        var angle = Math.atan(hhh / www)
+
+        var { unith, unitw } = scaletounithhhwww(hhh, www);
+
+        bulletposistart  = {
+          x: window.boxA.position.x + unitw,
+          y: window.boxA.position.y + unith
+        }
+
+        var bullet = Bodies.rectangle(bulletposistart.x, bulletposistart.y, myr, 3, {angle})
+        // Body.setMass(bullet, 0.0001)
+        bullet.render.fillStyle = 'aqua'
+        Body.setVelocity(bullet, {x: unitw, y: unith})
+        // bullets.push(bullet)
+        var timer = setTimeout(function() {
+          World.remove(engine.world, bullet)
+          clearTimeout(timer)
+        }, 3000)
+
+        World.add(engine.world, [bullet])
+      })
+
       var canvasEle = document.getElementsByTagName('canvas')[0]
+      // var cWidth = canvasEle.width * 2;
+      // var cHeight = canvasEle.height * 2;
       var cWidth = canvasEle.width;
       var cHeight = canvasEle.height;
       var viewportCentre = {
         x: render.options.width * 0.5,
         y: render.options.height * 0.5
       };
+
+      var yourPositionAbs = Object.assign({}, viewportCentre);
       // run the engine
       Engine.run(engine);
 
