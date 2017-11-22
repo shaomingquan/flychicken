@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <title>demo</title>
     <script src="./node_modules/matter-js/build/matter.min.js" charset="utf-8"></script>
+    <script src="./world.js" charset="utf-8"></script>
+    <script src="./hero.js" charset="utf-8"></script>
+    <script src="./bullet.js" charset="utf-8"></script>
+    <script src="./controller.js" charset="utf-8"></script>
     <style media="screen">
       html, body {
         height: 100%;
@@ -14,6 +18,7 @@
     </style>
   </head>
   <body>
+
     <script type="text/javascript">
 
 // /demo/#collisionFiltering 这个例子可以用来开启隐身
@@ -22,257 +27,99 @@
 // 用颜色代表血量
 // 同步子弹数据的时候实际上是同步子弹的初始位置
 
-
       // module aliases
-      window.Engine = Matter.Engine,
-      window.Render = Matter.Render,
-      window.World = Matter.World,
-      window.Bodies = Matter.Bodies;
-      window.Body = Matter.Body;
-      window.Events = Matter.Events;
-      window.Bounds = Matter.Bounds;
-      window.Mouse = Matter.Mouse;
+      window.E = {}; // global engine
+
+      E.Engine = Matter.Engine,
+      E.Render = Matter.Render,
+      E.World = Matter.World,
+      E.Bodies = Matter.Bodies;
+      E.Body = Matter.Body;
+      E.Events = Matter.Events;
+      E.Bounds = Matter.Bounds;
+      E.Mouse = Matter.Mouse;
+
 
       // create an engine
-      var engine = Engine.create();
-      var world = engine.world;
-      world.gravity.y = 0;
+      var engine = E.Engine.create();
+      var w = engine.world;
 
-      var heightOfWorld = 2000;
-      var widthOfWorld = 2000;
-
-      world.bounds.min.x = 0;
-      world.bounds.min.y = 0;
-      world.bounds.max.x = widthOfWorld;
-      world.bounds.max.y = heightOfWorld;
-
-
-
-      var STATIC = { isStatic: true };
-      var thicknessOfBound = 20;
-      var bounds = [
-        /* 上 */ Bodies.rectangle(
-                  widthOfWorld / 2,
-                  0,
-                  widthOfWorld,
-                  thicknessOfBound,
-                  STATIC
-                ),
-        /* 下 */ Bodies.rectangle(
-                  widthOfWorld / 2,
-                  heightOfWorld,
-                  widthOfWorld,
-                  thicknessOfBound,
-                  STATIC
-                ),
-        /* 左 */Bodies.rectangle(
-                  0,
-                  heightOfWorld / 2,
-                  thicknessOfBound,
-                  widthOfWorld,
-                  STATIC
-                ),
-        /* 右 */Bodies.rectangle(
-                  widthOfWorld,
-                  heightOfWorld / 2,
-                  thicknessOfBound,
-                  widthOfWorld,
-                  STATIC
-                ),
-      ]
-
-      // create a renderer
-      window.render = Render.create({
-        element: document.body,
-        engine: engine,
-        options: {
-            width: 1000,
-            height: 800,
-            // showAngleIndicator: true,
-            hasBounds: true,
-            wireframes: false
+      const world = new World ({
+        E,
+        _instance: w,
+        engine,
+        metrics: {
+          height: 2000,
+          width: 2000,
+          vPortHeight: 800,
+          vPortWidth: 1000,
+          thicknessOfBound: 20
         }
-      });
+      })
+
 
       // mouse event
-      window.mouse = Mouse.create(render.canvas)
+      // window.mouse = Mouse.create(render.canvas)
 
 
-
-
-
-      // create two boxes and a ground
-      window.myr = 10;
-      window.boxA = Bodies.rectangle(400, 200, myr * 2, myr * 2);
-      window.boxA.render.fillStyle = 'rgba(255, 0, 0, 1)'
-      window.boxA.render.strokeStyle = 'rgba(255, 0, 0, 0.7)'
-      window.boxA.render.lineWidth = '5'
-      // 视窗中心
-      function updateView () {
-        var boxPosition = window.boxA.position;
-
-      }
-
-      // add all of the bodies to the world
-      World.add(engine.world, [boxA, ...bounds]);
-
-      let codeDirectionMap = new Map();
-      codeDirectionMap.set(87, 'up');
-      codeDirectionMap.set(83, 'down');
-      codeDirectionMap.set(65, 'left');
-      codeDirectionMap.set(68, 'right');
-
-      //     87
-      // 65  83  68
-      var accelerationY = 0.05;
-      var accelerationX = 0.03;
-
-      // 制动加速度
-      var decelerationY = 0.1;
-      var decelerationX = 0.1;
-
-      // 阻力
-      var resistanceY = 0.075;
-      var resistanceX = 0.065;
-
-      // 当前速度
-      var vY = 0;
-      var vX = 0;
-
-      // 横纵的最大速度
-      var maxVY = 6;
-      var maxVX = 3;
-
-      // 加速度开关
-      var accY = false;
-      var acc_Y = false;
-      var accX = false;
-      var acc_X = false;
-
-      // 控制按键
-      var whenkeyXDown = new Map();
-      var whenkeyXUp = new Map();
-
-      // 飞船是否存在动力
-      var hasMotion = false;
-      var getMotion = f => _ => {hasMotion = true; f()}
-      var outofMotion = f => _ => {hasMotion = false; f()}
-      whenkeyXDown.set('down',  getMotion(_ => accY = true));
-      whenkeyXUp.set('down',    outofMotion(_ => accY = false));
-      whenkeyXDown.set('up',    getMotion(_ => acc_Y = true));
-      whenkeyXUp.set('up',      outofMotion(_ => acc_Y = false));
-      whenkeyXDown.set('right', getMotion(_ => accX = true));
-      whenkeyXUp.set('right',   outofMotion(_ => accX = false));
-      whenkeyXDown.set('left',  getMotion(_ => acc_X = true));
-      whenkeyXUp.set('left',    outofMotion(_ => acc_X = false));
-
-      document.addEventListener('keydown', e => {
-        var code = (e.keyCode || e.which);
-        var direction = codeDirectionMap.get(code);
-        if(!direction) return
-        whenkeyXDown.get(direction)();
-      })
-      document.addEventListener('keyup', e => {
-        var code = (e.keyCode || e.which);
-        var direction = codeDirectionMap.get(code);
-        if(!direction) return
-        whenkeyXUp.get(direction)();
-      })
-      Events.on(engine, 'beforeUpdate', function(event) {
-        if(!hasMotion) {
-          if(vY !== 0) {
-            let nextvY;
-            if(vY > 0) {
-              nextvY = vY - resistanceY;
-              if(nextvY * vY < 0) {
-                nextvY = 0
-              }
-            } else {
-              nextvY = vY + resistanceY;
-              if(nextvY * vY < 0) {
-                nextvY = 0
-              }
-            }
-            vY = nextvY
-          }
-
-          if(vX !== 0) {
-            let nextvX;
-            if(vX > 0) {
-              nextvX = vX - resistanceX;
-              if(nextvX * vX < 0) {
-                nextvX = 0
-              }
-            } else {
-              nextvX = vX + resistanceX;
-              if(nextvX * vX < 0) {
-                nextvX = 0
-              }
-            }
-            vX = nextvX
-          }
+      const heroA = new Hero({
+        E,
+        world,
+        metrics: false, // default
+        posi: {
+          x: 400,
+          y: 200
         }
-
-        if(accY) {
-          if(vY < 0) { //reverse
-            vY += decelerationY;
-          } else {
-            vY += accelerationY;
-            vY = Math.min(vY, maxVY);
-          }
-        }
-
-        if(accX) {
-          if(vX < 0) { //reverse
-            vX += decelerationX;
-          } else {
-            vX += accelerationX;
-            vX = Math.min(vX, maxVX);
-          }
-        }
-
-        if(acc_Y) {
-          if(vY > 0) { //reverse
-            vY -= decelerationY;
-          } else {
-            vY -= accelerationY;
-            vY = Math.max(vY, -maxVY);
-          }
-        }
-
-        if(acc_X) {
-          if(vX > 0) { //reverse
-            vX -= decelerationX;
-          } else {
-            vX -= accelerationX;
-            vX = Math.max(vX, -maxVX);
-          }
-        }
-
-        var aposi = window.mouse.absolute;
-        window.viewOffsetX = (aposi.x - viewportCentre.x) / 3;
-        window.viewOffsetY = (aposi.y - viewportCentre.y) / 3;
-
-
-        yourPositionAbs.x = viewportCentre.x + window.viewOffsetX;
-        yourPositionAbs.y = viewportCentre.y + window.viewOffsetY;
-
-        var www = aposi.x - yourPositionAbs.x;
-        var hhh = aposi.y - yourPositionAbs.y;
-        var ang = Math.atan(hhh / www)
-        Body.setAngle(window.boxA, ang)
-        // Fallow Hero X
-        render.bounds.min.x = boxA.position.x - cWidth / 2 + viewOffsetX;
-        render.bounds.max.x = boxA.position.x + cWidth / 2 + viewOffsetX;
-
-        // Fallow Hero Y
-        render.bounds.min.y = boxA.position.y - cHeight / 2 + viewOffsetY;
-        render.bounds.max.y = boxA.position.y + cHeight / 2 + viewOffsetY;
-
-        Body.setVelocity(boxA, {x: vX, y: vY})
-        // Body.setVelocity(boxA, {x: vX / 2, y: vY / 2})
       })
 
+      const heroB = new Hero({
+        E,
+        world,
+        metrics: false, // default
+        posi: {
+          x: 200,
+          y: 400
+        }
+      })
+
+      heroA.joinWorld();
+      heroB.joinWorld();
+      world.lockon(heroA);
+
+      const controller = new Controller({
+        E,
+        world,
+        metrics: {}
+      })
+      controller.addControlTo(heroA)
+
+
+      // Events.on(engine, 'beforeUpdate', function(event) {
+      //
+      //
+      //   var aposi = window.mouse.absolute;
+      //   window.viewOffsetX = (aposi.x - viewportCentre.x) / 3;
+      //   window.viewOffsetY = (aposi.y - viewportCentre.y) / 3;
+      //
+      //
+      //   yourPositionAbs.x = viewportCentre.x + window.viewOffsetX;
+      //   yourPositionAbs.y = viewportCentre.y + window.viewOffsetY;
+      //
+      //   var www = aposi.x - yourPositionAbs.x;
+      //   var hhh = aposi.y - yourPositionAbs.y;
+      //   var ang = Math.atan(hhh / www)
+      //   Body.setAngle(window.boxA, ang)
+      //   // Fallow Hero X
+      //   render.bounds.min.x = boxA.position.x - cWidth / 2 + viewOffsetX;
+      //   render.bounds.max.x = boxA.position.x + cWidth / 2 + viewOffsetX;
+      //
+      //   // Fallow Hero Y
+      //   render.bounds.min.y = boxA.position.y - cHeight / 2 + viewOffsetY;
+      //   render.bounds.max.y = boxA.position.y + cHeight / 2 + viewOffsetY;
+      //
+      //   // Body.setVelocity(boxA, {x: vX / 2, y: vY / 2})
+      // })
+/*
       function scaletounithhhwww (hhh, www) {
         var diagonal = Math.sqrt(hhh**2 + www**2)
         return {
@@ -320,11 +167,13 @@
       };
 
       var yourPositionAbs = Object.assign({}, viewportCentre);
+
+*/
       // run the engine
-      Engine.run(engine);
+      E.Engine.run(world.engine);
 
       // run the renderer
-      Render.run(render);
+      E.Render.run(world.render);
     </script>
   </body>
 </html>
