@@ -11,7 +11,9 @@ Hero.prototype.joinWorld = function () {
   let { Bodies, World } = this.E
   let { x, y } = this.posi
   let { height, width } = this.metrics
-  let hero = this._instance = Bodies.rectangle(x, y, height, width);
+  let hero = this._instance = Bodies.rectangle(x, y, height, width)
+  hero._isHero = true
+  hero._obj = this
 
   hero.render.fillStyle = 'rgba(255, 0, 0, 1)'
   hero.render.strokeStyle = 'rgba(255, 0, 0, 0.7)'
@@ -25,6 +27,14 @@ Hero.prototype.joinWorld = function () {
 Hero.prototype.leaveWorld = function () {
   let { World } = this.E
   World.remove(this.world._instance, this._instance)
+}
+
+Hero.prototype.fuckedBy = function (bulletOfWeapon) {
+  bulletOfWeapon.forEach(effect => effect(this))
+  console.log(this.metrics.hp)
+  if(this.metrics.hp <= 0) {
+    this.leaveWorld()
+  }
 }
 
 Hero.prototype.shoot = function (evePosi) {

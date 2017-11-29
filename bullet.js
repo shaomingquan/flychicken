@@ -5,6 +5,8 @@ function Bullet (info) {
   this.mousePosi = info.posi
   this.metrics = info.metrics || Bullet.baseBulletMetrics()
   this._instance = this.makeBullectInstance()
+  this._instance._isBullet = true
+  this._instance._obj = this
 
   this.timerForRemove = null
   this.willRemoveItSelf()
@@ -24,6 +26,12 @@ function scaletounit (vDistance, hDistance) {
     unitHDistance: (hDistance / diagonal) * 20
   }
 }
+
+Bullet.prototype.attck = function () {
+  // 跟现在的武器有关
+  return [hero => hero.metrics.hp -= this.metrics.hurt]
+}
+
 Bullet.prototype.makeBullectInstance = function () {
   // 根据英雄的位置构造一个子弹
   var { Body, Bodies, World } = this.E

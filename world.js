@@ -149,4 +149,13 @@ World.prototype.bootStrapLoop = function () {
       // 可以看别人的视角 => P2
     }
   })
+
+  Events.on(engine, 'collisionStart', function(event) {
+    var { bodyA, bodyB } = event.pairs[0];
+    var bullet = bodyA._isBullet ? bodyA : (bodyB._isBullet ? bodyB : null)
+    var hero = bodyA._isHero ? bodyA : (bodyB._isHero ? bodyB : null)
+    if(bullet && hero) {
+      hero._obj.fuckedBy(bullet._obj.attck())
+    }
+  });
 }
