@@ -5,6 +5,7 @@ function Controller (info) {
   this.mouse = E.Mouse.create(this.world.render.canvas)
 
   this.initKeyboard()
+  this.initClick()
 }
 
 Controller.prototype.getMousePosition = function () {
@@ -13,10 +14,16 @@ Controller.prototype.getMousePosition = function () {
 
 Controller.prototype.addControlTo = function (hero) {
   this.target = hero;
+  hero.controller = this;
 }
 
 Controller.prototype.initClick = function () {
-
+  // 这里看controller的状态
+  // 有可能是那种需要选定敌人的
+  // 简单来讲就是让controller的target发射子弹
+  document.addEventListener('click', () => {
+    this.target.shoot(this.mouse.absolute)
+  })
 }
 
 Controller.prototype.initKeyboard = function () {

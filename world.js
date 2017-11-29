@@ -1,10 +1,10 @@
 function World (info) {
-  this.E = info.E;
+  this.E = info.E; // 相关引擎
   this._instance = info._instance;
   this.engine = info.engine;
-  this.metrics = info.metrics;
-  this.lockedHero = null;
-  this.heros = [];
+  this.metrics = info.metrics; // 世界的各种尺寸
+  this.lockedHero = null; // 被锁定的hero
+  this.heros = []; // 在场的所有人
   /*
   世界宽度
   世界高度
@@ -129,21 +129,24 @@ World.prototype.bootStrapLoop = function () {
 
       yourPositionAbs.x = viewportCentre.x + viewOffsetX;
       yourPositionAbs.y = viewportCentre.y + viewOffsetY;
+      this.lockedHero.fixedPosi = yourPositionAbs; // 需要获取英雄的固定位置用来发射子弹
 
       var www = aposi.x - yourPositionAbs.x;
       var hhh = aposi.y - yourPositionAbs.y;
       var ang = Math.atan(hhh / www)
       Body.setAngle(lockedHeroInstance, ang)
+
+      var { FOV } = this.lockedHero.metrics
       // Fallow Hero X
-      this.render.bounds.min.x = lockedHeroInstance.position.x - cWidth / 2 + viewOffsetX;
-      this.render.bounds.max.x = lockedHeroInstance.position.x + cWidth / 2 + viewOffsetX;
+      this.render.bounds.min.x = lockedHeroInstance.position.x - (cWidth / 2) * FOV + viewOffsetX;
+      this.render.bounds.max.x = lockedHeroInstance.position.x + (cWidth / 2) * FOV + viewOffsetX;
 
       // Fallow Hero Y
-      this.render.bounds.min.y = lockedHeroInstance.position.y - cHeight / 2 + viewOffsetY;
-      this.render.bounds.max.y = lockedHeroInstance.position.y + cHeight / 2 + viewOffsetY;
+      this.render.bounds.min.y = lockedHeroInstance.position.y - (cHeight / 2) * FOV + viewOffsetY;
+      this.render.bounds.max.y = lockedHeroInstance.position.y + (cHeight / 2) * FOV + viewOffsetY;
 
     } else {
-
+      // 可以看别人的视角 => P2
     }
   })
 }

@@ -3,14 +3,8 @@ function Hero (info) {
   this.posi = info.posi
   this.world = info.world
   this.metrics = info.metrics || Hero.baseHeroMetrics()
-  /*
-  高度
-  宽度
-  xy加速度
-  xy制动
-  xy最大速度
-  xy摩擦
-  */
+  this.properties = [] // 英雄的现场道具
+  this.weapones = [] // 英雄的武器库，是一组高阶函数，作用于子弹
 }
 
 Hero.prototype.joinWorld = function () {
@@ -33,8 +27,16 @@ Hero.prototype.leaveWorld = function () {
   World.remove(this.world._instance, this._instance)
 }
 
-Hero.prototype.shoot = function () {
+Hero.prototype.shoot = function (evePosi) {
+  new Bullet({ // 要保证变量及时销毁
+    E: this.E,
+    hero: this,
+    metrics: false,
+    posi: evePosi
+    // 子弹也有默认的metric
+  })
 
+  // TODO: 需要经过英雄当前持有武器的处理
 }
 
 Hero.prototype.isDead = function () {
@@ -43,6 +45,15 @@ Hero.prototype.isDead = function () {
 
 Hero.prototype.nextFrameFromSocket = function () {
   // 需要从socket同步其他人的数据
+}
+
+Hero.prototype.scaleupFOVto = function (val, times) {
+  // 将视野扩大到指定值或者指定倍数
+
+}
+
+Hero.prototype.recoverFOV = function () {
+  // 恢复视野
 }
 
 Hero.prototype.nextFrame = function () {
@@ -58,7 +69,6 @@ Hero.prototype.nextFrame = function () {
     accY, acc_Y, accX, acc_X,
   } = metrics
 
-  console.log(hasMotion)
   if(!hasMotion) {
     if(vY !== 0) {
       let nextvY;
@@ -167,4 +177,7 @@ Hero.baseHeroMetrics = () => Object.assign({}, {
   acc_Y: false,
   accX: false,
   acc_X: false,
+
+  // 视野
+  FOV: 1
 })

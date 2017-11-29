@@ -146,7 +146,7 @@
         var bullet = Bodies.rectangle(bulletposistart.x, bulletposistart.y, myr, 3, {angle})
         // Body.setMass(bullet, 0.0001)
         bullet.render.fillStyle = 'aqua'
-        Body.setVelocity(bullet, {x: unitw, y: unith})
+        Body.setVelocity(bullet, {x: unitw * unitv, y: unith * unitv})
         // bullets.push(bullet)
         var timer = setTimeout(function() {
           World.remove(engine.world, bullet)
