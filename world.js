@@ -1,3 +1,5 @@
+// 世界
+
 function World (info) {
   this.E = info.E; // 相关引擎
   this._instance = info._instance;
@@ -86,14 +88,7 @@ World.prototype.makeBound = function () {
 
 World.prototype.lockon = function (hero) {
   this.lockedHero = hero // so it is me
-}
-
-function scaletounithhhwww (hhh, www) {
-  var diagonal = Math.sqrt(hhh**2 + www**2)
-  return {
-    unith: (hhh / diagonal) * 2.5 * myr,
-    unitw: (www / diagonal) * 2.5 * myr
-  }
+  hero.reportStatusLoop()
 }
 
 
@@ -154,8 +149,13 @@ World.prototype.bootStrapLoop = function () {
     var { bodyA, bodyB } = event.pairs[0];
     var bullet = bodyA._isBullet ? bodyA : (bodyB._isBullet ? bodyB : null)
     var hero = bodyA._isHero ? bodyA : (bodyB._isHero ? bodyB : null)
+
+    if(bullet) {
+      bullet._obj.removeBecauseHit()
+    }
+
     if(bullet && hero) {
-      hero._obj.fuckedBy(bullet._obj.attck())
+      hero._obj.fuckedBy(bullet._obj.attck(), bullet._obj)
     }
   });
 }

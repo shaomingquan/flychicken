@@ -1,3 +1,5 @@
+// 控制器对象
+
 function Controller (info) {
   let E = this.E = info.E
   this.world = info.world
@@ -39,8 +41,8 @@ Controller.prototype.initKeyboard = function () {
 
   // 飞船是否存在动力
   var hasMotion = false;
-  var getMotion = f => _ => {this.target.metrics.hasMotion = true; f()}
-  var outofMotion = f => _ => {this.target.metrics.hasMotion = false; f()}
+  var getMotion = f => _ => { f()}
+  var outofMotion = f => _ => { f()}
   whenkeyXDown.set('down',  getMotion(_ => this.target.metrics.accY = true));
   whenkeyXUp.set('down',    outofMotion(_ => this.target.metrics.accY = false));
   whenkeyXDown.set('up',    getMotion(_ => this.target.metrics.acc_Y = true));

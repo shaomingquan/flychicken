@@ -1,9 +1,11 @@
+// 子弹对象
+
 function Bullet (info) {
   this.E = info.E
   this.hero = info.hero
   this.world = this.hero.world
   this.mousePosi = info.posi
-  this.metrics = info.metrics || Bullet.baseBulletMetrics()
+  this.metrics = Object.assign(Bullet.baseBulletMetrics(), info.metrics || {})
   this._instance = this.makeBullectInstance()
   this._instance._isBullet = true
   this._instance._obj = this
@@ -76,13 +78,22 @@ Bullet.prototype.makeBullectInstance = function () {
   return bullet
 }
 
+Bullet.prototype.removeBecauseHit = function () {
+  let { World } = this.E
+  clearTimeout(this.timerForRemove)
+  this.timerForRemove = setTimeout(() => {
+    World.remove(this.world._instance, this._instance)
+    clearTimeout(this.timerForRemove)
+  }, 17)
+}
+
 Bullet.prototype.willRemoveItSelf = function () {
   // 伴随着碰撞清空现在的timer，创建新的time
   let { World } = this.E
   this.timerForRemove = setTimeout(() => {
     World.remove(this.world._instance, this._instance)
     clearTimeout(this.timerForRemove)
-  }, 3000)
+  }, 5000)
 }
 
 Bullet.baseBulletMetrics = () => Object.assign({}, {

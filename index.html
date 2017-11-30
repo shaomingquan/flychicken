@@ -3,7 +3,11 @@
   <head>
     <meta charset="utf-8">
     <title>demo</title>
+    <script type="text/javascript">
+      window.language = 'zh'
+    </script>
     <script src="./node_modules/matter-js/build/matter.min.js" charset="utf-8"></script>
+    <script src="./translater.js" charset="utf-8"></script>
     <script src="./world.js" charset="utf-8"></script>
     <script src="./hero.js" charset="utf-8"></script>
     <script src="./bullet.js" charset="utf-8"></script>
@@ -15,9 +19,17 @@
         padding: 0;
         margin: 0;
       }
+      #reporter {
+        position: fixed;
+        top: 4px;
+        right: 4px;
+        width: 150px;
+        text-align: left;
+      }
     </style>
   </head>
   <body>
+    <div id="reporter"></div>
 
     <script type="text/javascript">
 
@@ -67,25 +79,33 @@
       const heroA = new Hero({
         E,
         world,
-        metrics: false, // default
+        metrics: {
+          fillStyle: 'rgba(0, 255, 255, 1)',
+          strokeStyle: 'rgba(0, 255, 255, 0.7)',
+        }, // default
         posi: {
           x: 400,
           y: 200
         }
       })
 
-      const heroB = new Hero({
-        E,
-        world,
-        metrics: false, // default
-        posi: {
-          x: 200,
-          y: 400
-        }
-      })
+      const enemies = []
+      for (var i = 1 ; i < 1 + 10 ; i ++) {
+        enemies.push(
+          new Hero({
+            E,
+            world,
+            metrics: false, // default
+            posi: {
+              x: 100 * i,
+              y: 100 * i
+            }
+          })
+        )
+      }
 
       heroA.joinWorld();
-      heroB.joinWorld();
+      enemies.map(e => e.joinWorld())
       world.lockon(heroA);
 
       const controller = new Controller({

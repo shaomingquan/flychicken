@@ -1,8 +1,11 @@
+// 英雄
+
 function Hero (info) {
   this.E = info.E
   this.posi = info.posi
   this.world = info.world
-  this.metrics = info.metrics || Hero.baseHeroMetrics()
+  this.metrics = Object.assign(Hero.baseHeroMetrics(), info.metrics || {})
+  console.log(this.metrics)
   this.properties = [] // 英雄的现场道具
   this.weapones = [] // 英雄的武器库，是一组高阶函数，作用于子弹
 }
@@ -15,13 +18,53 @@ Hero.prototype.joinWorld = function () {
   hero._isHero = true
   hero._obj = this
 
-  hero.render.fillStyle = 'rgba(255, 0, 0, 1)'
-  hero.render.strokeStyle = 'rgba(255, 0, 0, 0.7)'
-  hero.render.lineWidth = '5'
+  hero.render.fillStyle = this.metrics.fillStyle
+  hero.render.strokeStyle = this.metrics.strokeStyle
+  hero.render.lineWidth = this.metrics.lineWidth
 
   this.world.heros.push(this);
 
   World.add(this.world._instance, [hero]);
+}
+
+var reporter = null;
+window.addEventListener('load', function () {
+  reporter = document.getElementById('reporter');
+})
+Hero.prototype.reportStatus = function () {
+  reporter.innerHTML = (() => {
+    var ret = []
+
+    var metricsFromInstancePosition = ["x", "y"]
+    ret.push(metricsFromInstancePosition.map(metric => {
+      var currentTranslater = window.translater.hero.metrics[metric]
+      var currentValue = this._instance.position[metric]
+      var normalize = currentTranslater.normalize ? currentTranslater.normalize[window.language] : undefined
+      return [
+        currentTranslater[window.language],
+        normalize ? normalize(currentValue) : currentValue
+      ].join(': ')
+    }).join('<br>'))
+
+    var metricsKeys = ["kill", "hp", "vY", "vX", "FOV", "accY", "acc_Y", "accX", "acc_X"]
+    ret.push(metricsKeys.map(metric => {
+      var currentTranslater = window.translater.hero.metrics[metric]
+      var currentValue = this.metrics[metric]
+      var normalize = currentTranslater.normalize ? currentTranslater.normalize[window.language] : undefined
+      return [
+        currentTranslater[window.language],
+        normalize ? normalize(currentValue) : currentValue
+      ].join(': ')
+    }).join('<br>'))
+
+    return ret.join('<br>')
+  })()
+}
+
+Hero.prototype.reportStatusLoop = function () {
+  setInterval(() => {
+    reporter && this.reportStatus()
+  }, 50)
 }
 
 Hero.prototype.leaveWorld = function () {
@@ -29,10 +72,11 @@ Hero.prototype.leaveWorld = function () {
   World.remove(this.world._instance, this._instance)
 }
 
-Hero.prototype.fuckedBy = function (bulletOfWeapon) {
+Hero.prototype.fuckedBy = function (bulletOfWeapon, bulletObj) {
   bulletOfWeapon.forEach(effect => effect(this))
   console.log(this.metrics.hp)
   if(this.metrics.hp <= 0) {
+    bulletObj.hero.metrics.kill ++
     this.leaveWorld()
   }
 }
@@ -75,42 +119,42 @@ Hero.prototype.nextFrame = function () {
     resistanceY, resistanceX,
     vY, vX,
     maxVY, maxVX,
-    hasMotion,
     accY, acc_Y, accX, acc_X,
   } = metrics
 
-  if(!hasMotion) {
-    if(vY !== 0) {
-      let nextvY;
-      if(vY > 0) {
-        nextvY = vY - resistanceY;
-        if(nextvY * vY < 0) {
-          nextvY = 0
-        }
-      } else {
-        nextvY = vY + resistanceY;
-        if(nextvY * vY < 0) {
-          nextvY = 0
-        }
-      }
-      metrics.vY = nextvY
-    }
+  var hasMotionX = accX || acc_X
+  var hasMotionY = accY || acc_Y
 
-    if(vX !== 0) {
-      let nextvX;
-      if(vX > 0) {
-        nextvX = vX - resistanceX;
-        if(nextvX * vX < 0) {
-          nextvX = 0
-        }
-      } else {
-        nextvX = vX + resistanceX;
-        if(nextvX * vX < 0) {
-          nextvX = 0
-        }
+  if(vY !== 0 && !hasMotionY) {
+    let nextvY;
+    if(vY > 0) {
+      nextvY = vY - resistanceY;
+      if(nextvY * vY < 0) {
+        nextvY = 0
       }
-      metrics.vX = nextvX
+    } else {
+      nextvY = vY + resistanceY;
+      if(nextvY * vY < 0) {
+        nextvY = 0
+      }
     }
+    metrics.vY = nextvY
+  }
+
+  if(vX !== 0 && !hasMotionX) {
+    let nextvX;
+    if(vX > 0) {
+      nextvX = vX - resistanceX;
+      if(nextvX * vX < 0) {
+        nextvX = 0
+      }
+    } else {
+      nextvX = vX + resistanceX;
+      if(nextvX * vX < 0) {
+        nextvX = 0
+      }
+    }
+    metrics.vX = nextvX
   }
 
   if(accY) {
@@ -179,8 +223,8 @@ Hero.baseHeroMetrics = () => Object.assign({}, {
   maxVY: 6,
   maxVX: 3,
 
-  // hero是否存在动力
-  hasMotion: false,
+  // hero是否存在动力 fixed:动力自动判断且动力是双向的
+  // hasMotion: false,
 
   // 加速度开关
   accY: false,
@@ -189,5 +233,8 @@ Hero.baseHeroMetrics = () => Object.assign({}, {
   acc_X: false,
 
   // 视野
-  FOV: 1
+  FOV: 1,
+
+  // 击杀
+  kill: 0
 })
