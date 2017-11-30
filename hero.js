@@ -2,10 +2,10 @@
 
 function Hero (info) {
   this.E = info.E
+  this.name = info.name
   this.posi = info.posi
   this.world = info.world
   this.metrics = Object.assign(Hero.baseHeroMetrics(), info.metrics || {})
-  console.log(this.metrics)
   this.properties = [] // 英雄的现场道具
   this.weapones = [] // 英雄的武器库，是一组高阶函数，作用于子弹
 }
@@ -27,12 +27,12 @@ Hero.prototype.joinWorld = function () {
   World.add(this.world._instance, [hero]);
 }
 
-var reporter = null;
+Hero.statusReporter = null;
 window.addEventListener('load', function () {
-  reporter = document.getElementById('reporter');
+  Hero.statusReporter = document.getElementById('mystatus');
 })
 Hero.prototype.reportStatus = function () {
-  reporter.innerHTML = (() => {
+  Hero.statusReporter.innerHTML = (() => {
     var ret = []
 
     var metricsFromInstancePosition = ["x", "y"]
@@ -69,16 +69,24 @@ Hero.prototype.reportStatusLoop = function () {
 
 Hero.prototype.leaveWorld = function () {
   let { World } = this.E
+  this.world.removeHero(this)
+  this.ai && this.ai.logout() // ai退出
+  this.controller && this.controller.logout(this)
   World.remove(this.world._instance, this._instance)
 }
 
 Hero.prototype.fuckedBy = function (bulletOfWeapon, bulletObj) {
   bulletOfWeapon.forEach(effect => effect(this))
-  console.log(this.metrics.hp)
+  window.reporter.report(`${this.name} 被 ${bulletObj.hero.name} 击中（hp剩余${this.metrics.hp}）`)
   if(this.metrics.hp <= 0) {
     bulletObj.hero.metrics.kill ++
+    window.reporter.report(`${this.name} 凉了，被 ${bulletObj.hero.name} 击杀`)
     this.leaveWorld()
   }
+}
+
+Hero.prototype.getPosition = function () {
+  return this._instance.position
 }
 
 Hero.prototype.shoot = function (evePosi) {
@@ -221,7 +229,7 @@ Hero.baseHeroMetrics = () => Object.assign({}, {
 
   // 横纵的最大速度
   maxVY: 6,
-  maxVX: 3,
+  maxVX: 6,
 
   // hero是否存在动力 fixed:动力自动判断且动力是双向的
   // hasMotion: false,

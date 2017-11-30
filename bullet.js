@@ -6,7 +6,7 @@ function Bullet (info) {
   this.world = this.hero.world
   this.mousePosi = info.posi
   this.metrics = Object.assign(Bullet.baseBulletMetrics(), info.metrics || {})
-  this._instance = this.makeBullectInstance()
+  this._instance = this.makeBullectInstance(info.posi)
   this._instance._isBullet = true
   this._instance._obj = this
 
@@ -34,14 +34,15 @@ Bullet.prototype.attck = function () {
   return [hero => hero.metrics.hp -= this.metrics.hurt]
 }
 
-Bullet.prototype.makeBullectInstance = function () {
+Bullet.prototype.makeBullectInstance = function (target) {
   // 根据英雄的位置构造一个子弹
   var { Body, Bodies, World } = this.E
-  var { x, y } = this.hero.fixedPosi // 这里一定取固定位置！
+  var isMe = !!this.hero.fixedPosi;
+  var { x, y } = isMe ? this.hero.fixedPosi : this.hero.getPosition() // 这里一定取固定位置！
   var heroX = x
   var heroY = y
 
-  var { x, y } = this.hero.controller.mouse.absolute
+  var { x, y } = target
   var mx = x
   var my = y
 

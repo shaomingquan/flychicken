@@ -7,6 +7,8 @@
       window.language = 'zh'
     </script>
     <script src="./node_modules/matter-js/build/matter.min.js" charset="utf-8"></script>
+    <script src="./ais/stupid_man.js" charset="utf-8"></script>
+    <script src="./reporter.js" charset="utf-8"></script>
     <script src="./translater.js" charset="utf-8"></script>
     <script src="./world.js" charset="utf-8"></script>
     <script src="./hero.js" charset="utf-8"></script>
@@ -19,16 +21,27 @@
         padding: 0;
         margin: 0;
       }
-      #reporter {
+      #mystatus {
         position: fixed;
         top: 4px;
         right: 4px;
         width: 150px;
         text-align: left;
+        color: rgba(255, 255, 255, 0.6);
+      }
+      #reporter {
+        position: fixed;
+        bottom: 4px;
+        right: 4px;
+        width: 200px;
+        text-align: left;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
       }
     </style>
   </head>
   <body>
+    <div id="mystatus"></div>
     <div id="reporter"></div>
 
     <script type="text/javascript">
@@ -65,8 +78,8 @@
         metrics: {
           height: 2000,
           width: 2000,
-          vPortHeight: 800,
-          vPortWidth: 1000,
+          vPortHeight: window.screen.height,
+          vPortWidth: window.screen.width,
           thicknessOfBound: 20
         }
       })
@@ -78,6 +91,7 @@
 
       const heroA = new Hero({
         E,
+        name: '狗子',
         world,
         metrics: {
           fillStyle: 'rgba(0, 255, 255, 1)',
@@ -90,18 +104,20 @@
       })
 
       const enemies = []
-      for (var i = 1 ; i < 1 + 10 ; i ++) {
-        enemies.push(
-          new Hero({
-            E,
-            world,
-            metrics: false, // default
-            posi: {
-              x: 100 * i,
-              y: 100 * i
-            }
-          })
-        )
+      for (var i = 3 ; i < 3 + 8 ; i ++) {
+        var enemy = new Hero({
+          E,
+          name: 'bot.' + (i - 2),
+          world,
+          metrics: false, // default
+          posi: {
+            x: 100 * i,
+            y: 100 * i
+          }
+        })
+
+        new Stupid_AI({ai: enemy, enemies: [heroA]})
+        enemies.push(enemy)
       }
 
       heroA.joinWorld();
@@ -115,86 +131,7 @@
       })
       controller.addControlTo(heroA)
 
-
-      // Events.on(engine, 'beforeUpdate', function(event) {
-      //
-      //
-      //   var aposi = window.mouse.absolute;
-      //   window.viewOffsetX = (aposi.x - viewportCentre.x) / 3;
-      //   window.viewOffsetY = (aposi.y - viewportCentre.y) / 3;
-      //
-      //
-      //   yourPositionAbs.x = viewportCentre.x + window.viewOffsetX;
-      //   yourPositionAbs.y = viewportCentre.y + window.viewOffsetY;
-      //
-      //   var www = aposi.x - yourPositionAbs.x;
-      //   var hhh = aposi.y - yourPositionAbs.y;
-      //   var ang = Math.atan(hhh / www)
-      //   Body.setAngle(window.boxA, ang)
-      //   // Fallow Hero X
-      //   render.bounds.min.x = boxA.position.x - cWidth / 2 + viewOffsetX;
-      //   render.bounds.max.x = boxA.position.x + cWidth / 2 + viewOffsetX;
-      //
-      //   // Fallow Hero Y
-      //   render.bounds.min.y = boxA.position.y - cHeight / 2 + viewOffsetY;
-      //   render.bounds.max.y = boxA.position.y + cHeight / 2 + viewOffsetY;
-      //
-      //   // Body.setVelocity(boxA, {x: vX / 2, y: vY / 2})
-      // })
-/*
-      function scaletounithhhwww (hhh, www) {
-        var diagonal = Math.sqrt(hhh**2 + www**2)
-        return {
-          unith: (hhh / diagonal) * 2.5 * myr,
-          unitw: (www / diagonal) * 2.5 * myr
-        }
-      }
-
-      var bullets = [];
-      document.addEventListener('click', function () {
-        var aposi = window.mouse.absolute;
-        var www = aposi.x - yourPositionAbs.x;
-        var hhh = aposi.y - yourPositionAbs.y;
-
-        var angle = Math.atan(hhh / www)
-
-        var { unith, unitw } = scaletounithhhwww(hhh, www);
-
-        bulletposistart  = {
-          x: window.boxA.position.x + unitw,
-          y: window.boxA.position.y + unith
-        }
-
-        var bullet = Bodies.rectangle(bulletposistart.x, bulletposistart.y, myr, 3, {angle})
-        // Body.setMass(bullet, 0.0001)
-        bullet.render.fillStyle = 'aqua'
-        Body.setVelocity(bullet, {x: unitw * unitv, y: unith * unitv})
-        // bullets.push(bullet)
-        var timer = setTimeout(function() {
-          World.remove(engine.world, bullet)
-          clearTimeout(timer)
-        }, 3000)
-
-        World.add(engine.world, [bullet])
-      })
-
-      var canvasEle = document.getElementsByTagName('canvas')[0]
-      // var cWidth = canvasEle.width * 2;
-      // var cHeight = canvasEle.height * 2;
-      var cWidth = canvasEle.width;
-      var cHeight = canvasEle.height;
-      var viewportCentre = {
-        x: render.options.width * 0.5,
-        y: render.options.height * 0.5
-      };
-
-      var yourPositionAbs = Object.assign({}, viewportCentre);
-
-*/
-      // run the engine
       E.Engine.run(world.engine);
-
-      // run the renderer
       E.Render.run(world.render);
     </script>
   </body>

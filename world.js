@@ -18,6 +18,11 @@ function World (info) {
   this.makeBound()
   this.bootStrapLoop()
 }
+
+World.prototype.removeHero = function (hero) {
+  this.heros = this.heros.filter(h => h != hero)
+}
+
 World.prototype.initRender = function () {
   let { vPortWidth, vPortHeight } = this.metrics;
   let { Render } = this.E;
@@ -108,8 +113,8 @@ World.prototype.bootStrapLoop = function () {
     this.heros.forEach(hero => {
       if(hero === this.lockedHero) {
         hero.nextFrame()
-      } else {
-        hero.nextFrameFromSocket()
+      } else { // 其实应该没什么不同
+        hero.nextFrame()
       }
     })
 

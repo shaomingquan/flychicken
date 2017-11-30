@@ -15,17 +15,34 @@ Controller.prototype.getMousePosition = function () {
 }
 
 Controller.prototype.addControlTo = function (hero) {
-  this.target = hero;
-  hero.controller = this;
+  this.target = hero
+  hero.controller = this
+}
+
+Controller.prototype.logout = function (hero) {
+  this.target = null
+  hero.controller = null
+  this.removeClick()
+  this.removeKeyboard()
+}
+
+Controller.prototype.removeClick = function () {
+  document.removeEventListener('click', this._handler_click)
 }
 
 Controller.prototype.initClick = function () {
   // 这里看controller的状态
   // 有可能是那种需要选定敌人的
   // 简单来讲就是让controller的target发射子弹
-  document.addEventListener('click', () => {
+  this._handler_click = () => {
     this.target.shoot(this.mouse.absolute)
-  })
+  }
+  document.addEventListener('click', this._handler_click)
+}
+
+Controller.prototype.removeKeyboard = function () {
+  document.removeEventListener('keydown', this._handler_keydown)
+  document.removeEventListener('keyup', this._handler_keyup)
 }
 
 Controller.prototype.initKeyboard = function () {
@@ -52,18 +69,21 @@ Controller.prototype.initKeyboard = function () {
   whenkeyXDown.set('left',  getMotion(_ => this.target.metrics.acc_X = true));
   whenkeyXUp.set('left',    outofMotion(_ => this.target.metrics.acc_X = false));
 
-  document.addEventListener('keydown', e => {
+  this._handler_keydown = e => {
     if(!this.target) return
     var code = (e.keyCode || e.which);
     var direction = codeDirectionMap.get(code);
     if(!direction) return
     whenkeyXDown.get(direction)();
-  })
-  document.addEventListener('keyup', e => {
+  }
+  document.addEventListener('keydown', this._handler_keydown)
+
+  this._handler_keyup = e => {
     if(!this.target) return
     var code = (e.keyCode || e.which);
     var direction = codeDirectionMap.get(code);
     if(!direction) return
     whenkeyXUp.get(direction)();
-  })
+  }
+  document.addEventListener('keyup', this._handler_keyup)
 }
