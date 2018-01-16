@@ -87,11 +87,13 @@
 
       // mouse event
       // window.mouse = Mouse.create(render.canvas)
+      window.alert('lint：使用WASD控制方向，鼠标左键射击')
+      var name =  window.prompt('尊姓大名') || '狗子'
 
 
       const heroA = new Hero({
         E,
-        name: '狗子',
+        name: name,
         world,
         metrics: {
           fillStyle: 'rgba(0, 255, 255, 1)',
