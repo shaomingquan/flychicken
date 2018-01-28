@@ -12,6 +12,9 @@
     if(reportercontents.length > reporterMaxLength) {
       reportercontents.shift()
     }
-    reporterdom.innerHTML = reportercontents.join('<br>')
+
+    reporterdom && (_ => {
+      reporterdom.innerHTML = reportercontents.join('<br>')
+    })()
   }
 } ())

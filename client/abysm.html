@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>demo</title>
+    <script type="text/javascript">
+      window.language = 'zh'
+      window.host = 'localhost:8888'
+      window.playerid = (_ => {
+        let ts = Date.now()
+        let prefix = Array.from(new Array(10)).reduce((prefix, current) => prefix + String.fromCharCode(65 + parseInt(Math.random() * 26)), '')
+        return `${prefix}-${ts}`
+      })()
+      window.playerisactive = false
+    </script>
+    <script src="./libs/matter.min.js" charset="utf-8"></script>
+    <script src="./ais/stupid_server_man.js" charset="utf-8"></script>
+    <script src="./reporter.js" charset="utf-8"></script>
+    <script src="./translater.js" charset="utf-8"></script>
+    <script src="./world.js" charset="utf-8"></script>
+    <script src="./hero.js" charset="utf-8"></script>
+    <script src="./bullet.js" charset="utf-8"></script>
+    <script src="./controller.js" charset="utf-8"></script>
+    <style media="screen">
+      html, body {
+        height: 100%;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      #mystatus {
+        position: fixed;
+        top: 4px;
+        right: 4px;
+        width: 150px;
+        text-align: left;
+        color: rgba(255, 255, 255, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mystatus"></div>
+
+    <script type="text/javascript">
+
+
+      window.onbeforeunload = function () {
+        // 离开之前通知服务端销毁socket以及player对象
+        socket.close()
+      }
+
+      window.activeChecker = setInterval(function () {
+        if(!window.playerisactive) {
+          // 断开socket
+          socket.close()
+          clearInterval(window.activeChecker)
+        }
+        window.playerisactive = false
+      }, 10 * 60 * 1000)
+
+      // module aliases
+      window.E = {}; // global engine
+
+      E.Engine = Matter.Engine,
+      E.Render = Matter.Render,
+      E.World = Matter.World,
+      E.Bodies = Matter.Bodies;
+      E.Body = Matter.Body;
+      E.Events = Matter.Events;
+      E.Bounds = Matter.Bounds;
+      E.Mouse = Matter.Mouse;
+
+
+      // create an engine
+      var engine = E.Engine.create();
+      var w = engine.world;
+
+      const world = new World ({
+        E,
+        _instance: w,
+        engine,
+        metrics: {
+          height: 2000,
+          width: 2000,
+          vPortHeight: window.screen.height,
+          vPortWidth: window.screen.width,
+          thicknessOfBound: 20
+        }
+      })
+
+
+      // mouse event
+      // window.mouse = Mouse.create(render.canvas)
+      var name = window.playerid
+      const heroA = new Hero({
+        E,
+        name: name,
+        world,
+        metrics: {
+          fillStyle: 'rgba(0, 255, 255, 1)',
+          strokeStyle: 'rgba(0, 255, 255, 0.7)',
+        }, // default
+        posi: {
+          x: 400,
+          y: 200
+        }
+      })
+
+      var socket = new WebSocket(`ws://${window.host}/room/status/${window.playerid}/`)
+
+      const enemies = {}
+      const otherPlayers = {}
+
+      const metrics = ["accX", "accY", "acc_X", "acc_Y"]
+      socket.addEventListener("message", function (e) {
+        let data = JSON.parse(e.data)
+        let [ type, id ] = data.type.split(':')
+        let action = data.action
+        let d = data.data
+
+        if(type === 'enemy') {
+          if(action === 'action:hanging') {
+            let currentEnemy = enemies[id] || (() => {
+              let aiHero = new Hero({
+                E,
+                name: 'bot.' + id,
+                world,
+                metrics: false, // default
+                posi: {
+                  x: d[4],
+                  y: d[5]
+                }
+              })
+              enemies[id] = aiHero
+              aiHero.joinWorld()
+              console.log(aiHero)
+              return aiHero
+            }) ()
+
+            metrics.forEach((attr, index) => {
+              currentEnemy.metrics[attr] = !!d[index]
+            })
+          }
+        }
+      })
+
+      heroA.joinWorld();
+      world.lockon(heroA);
+
+      const controller = new Controller({
+        E,
+        world,
+        socket, // 如果jialesocket，controller会往socket里面塞事件
+        metrics: {}
+      })
+      controller.addControlTo(heroA)
+
+      E.Engine.run(world.engine);
+      E.Render.run(world.render);
+    </script>
+  </body>
+</html>
